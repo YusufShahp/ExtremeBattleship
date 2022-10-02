@@ -1,0 +1,99 @@
+<html>
+<head>
+    <script type="text/javascript">
+        setInterval(function(){ onTime(); }, 10000);
+        function onTime()
+        {
+            /*var urlToNavigateTo = window.location.origin + "/Battleship2/Wait";
+            var ID = document.getElementById("gameID").innerHTML;
+
+            var url = new URL(urlToNavigateTo);
+            url.searchParams.append("input", ID);
+            updatePageViaAjax(url);*/
+
+            var ID = document.getElementById("gameID").innerHTML;
+            var player = document.getElementById("playerNumber").innerHTML;
+            
+            var urlToNavigateTo = window.location.origin + "/Battleship2/Wait";
+            var url = new URL(urlToNavigateTo);
+            url.searchParams.append("gameID", ID);
+            url.searchParams.append("playerNumber", player);
+            updatePageViaAjax(url);
+        }
+        function updatePageViaAjax(targetUrl)
+        {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() 
+            {
+            if (this.readyState == XMLHttpRequest.DONE)
+            {
+                if (this.status == 200) 
+                {
+                    if(this.responseText == "ready")
+                    {
+                        var ID = document.getElementById("gameID").innerHTML;
+                        var player = document.getElementById("playerNumber").innerHTML;
+                        
+                        var urlToNavigateTo = window.location.origin + "/Battleship2/NextMove";
+                        var url = new URL(urlToNavigateTo);
+                        url.searchParams.append("gameID", ID);
+                        url.searchParams.append("playerNumber", player);
+                        window.location = url;
+                    }
+                    else
+                    {
+                        document.open();
+                        document.write(this.responseText);
+                        document.close();
+                    }    
+                //var body = document.getElementById("body");
+                //body.innerHTML = this.responseText;
+                }
+                // else - TODO - need appropriate error messaging
+            }
+            };
+
+            xhttp.open("GET", targetUrl, true);
+            xhttp.send();
+        }
+    </script>
+    <style>
+        
+    body {background-color: #cccccc; text-align:center; font-size: 150%;}
+    /*h1   {text-align:center; font-size: 200%; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif}*/
+    .bold {font-size: 200%; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;}
+    .button 
+    {
+        background-color: #b91616;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    .button1 
+    {
+        background-color: #16b924;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    </style>
+</head>
+<body>
+    <h1 class="bold">Extreme Battleship</h1>
+    <h1 id = "gameID" style="visibility: hidden"></h1>
+    <h1 id = "message"></h1>
+    <span id = "playerNumber" style="visibility: hidden"></span>
+</body>
+</html>

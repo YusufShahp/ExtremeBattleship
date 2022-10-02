@@ -1,0 +1,672 @@
+<html> 
+ <head> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>   
+  <script type="text/javascript">
+  window.onbeforeunload = function() { return "Your game will be gone"; };
+  var newSelection = null;
+  var readyToGuess = false;
+  
+  /* ------ DEBUG ONLY ---------- */
+  var isManualDebug = false
+
+  setInterval(function(){ onTime(); }, 50000);
+  function onTime()
+  {
+    if (!isManualDebug)
+    {
+      performStateCheck();
+    }      
+  }
+
+  function performStateCheck()
+  {
+    if (readyToGuess)
+    {
+      /*var urlToNavigateTo = window.location.origin + "/Battleship2/Wait";
+      var ID = document.getElementById("gameID").innerHTML;
+
+      var url = new URL(urlToNavigateTo);
+      url.searchParams.append("input", ID);
+      updatePageViaAjax(url);*/
+
+      var ID = document.getElementById("gameID").innerHTML;
+      var player = document.getElementById("playerNumber").innerHTML;
+      
+      var urlToNavigateTo = window.location.origin + "/Battleship2/NextMove";
+      var url = new URL(urlToNavigateTo);
+      url.searchParams.append("gameID", ID);
+      url.searchParams.append("playerNumber", player);
+      url.searchParams.append("move", "-100");
+      updatePageViaAjax(url);
+    }
+  }
+
+  function selectCell(el)
+  {
+    newSelection = null;
+    var clickedClass = el.getAttribute("class");
+    if (clickedClass == "land")
+    {
+      var clickedSpan = el.childNodes[0];
+      var clickedSpanClass = clickedSpan.getAttribute("class") 
+      if (clickedSpanClass == null)
+      {
+        newSelection = el.id;
+      }
+    }	  
+
+    var userSelectionEl = document.getElementById("userSelection");
+    var nextMoveButton = document.getElementById("nextMoveButton");
+    if (newSelection == null)
+    {
+      nextMoveButton.disabled = true;
+      userSelectionEl.innerHTML = "<p style='color:red;'>Invalid selection. Please try again.</p>";
+    }
+    else
+    {
+      // TODO: update the "userSelection" inner HTML to have the 
+      // selected value (eg: A1, F3)
+      let temp = newSelection.substring(1,2);
+      let num = String.fromCharCode(97 + parseInt(temp));
+      let temp2 = newSelection.substring(0,1);
+      let temp3 = parseInt(temp2) + 1;
+      userSelectionEl.innerHTML = "<h4 style='color:blue;'>" + num.toUpperCase() + temp3 +"</h4>";
+      nextMoveButton.disabled = false;
+    }
+  }
+  
+  function makeNextMove()
+  {
+	  var gameID = document.getElementById("gameID").innerHTML;
+	  var playerNumber = document.getElementById("playerNumber").innerHTML;
+
+    
+	  var urlToNavigateTo = window.location.origin + "/Battleship2/NextMove";
+	
+    var url = new URL(urlToNavigateTo);
+    url.searchParams.append("move", newSelection);
+    url.searchParams.append("gameID", gameID);
+    url.searchParams.append("playerNumber", playerNumber);
+	
+    //window.location = url;
+    updatePageViaAjaxMove(url, false);
+  }
+
+  function rearrangeShips()
+  {
+    var ID = document.getElementById("gameID").innerHTML;
+    var player = document.getElementById("playerNumber").innerHTML;
+
+    var urlToNavigateTo = window.location.origin + "/Battleship2";
+    var url = new URL(urlToNavigateTo);
+    url.searchParams.append("gameID", ID);
+    url.searchParams.append("playerNumber", player);
+    //window.location = url;
+    updatePageViaAjaxMove(url, true);
+  }
+
+  function goHome()
+  {
+    var urlToNavigateTo = window.location.origin + "/";
+    var url = new URL(urlToNavigateTo);
+    window.location = url;
+  }
+
+  function startGame()
+  {
+    // First, discard any existing user selection
+    newSelection = null;
+    var userSelectionEl = document.getElementById("userSelection");
+    userSelectionEl.innerHTML = "";
+    
+    // Next hide the rearrangeShips pane and show the newMove pane
+    var button1 = document.getElementById("rearrangeShips");
+    button1.disabled = true;
+    var button2 = document.getElementById("startGame");
+    button2.disabled = true;
+    var hidden = document.getElementById("rearrangeShipsPane");
+    hidden.setAttribute("style", "display:none;");
+    //var show = document.getElementById("nextMovePane");
+    //show.removeAttribute("style");
+    readyToGuess = true;
+  }
+
+  function updatePageViaAjax(targetUrl)
+  {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() 
+    {
+      if (this.readyState == XMLHttpRequest.DONE)
+      {
+        if (this.status == 200) 
+        {
+          if(this.responseText == "wait")
+          {
+            document.getElementById("status").innerHTML = "wait for the opponent to place their ships";
+
+            var button1 = document.getElementById("rearrangeShips");
+            button1.disabled = true;
+            var button2 = document.getElementById("startGame");
+            button2.disabled = true;
+            var hidden = document.getElementById("rearrangeShipsPane");
+            hidden.setAttribute("style", "display:none;");
+          }
+          else if(this.responseText == "notTurn")
+          {
+            document.getElementById("status").innerHTML = "It is the opponents turn";
+
+            var button1 = document.getElementById("rearrangeShips");
+            button1.disabled = true;
+            var button2 = document.getElementById("startGame");
+            button2.disabled = true;
+            var hidden = document.getElementById("rearrangeShipsPane");
+            hidden.setAttribute("style", "display:none;");
+          }
+          else if(this.responseText == "win")
+          {
+            readyToGuess = false;
+            document.getElementById("status").innerHTML = "";
+            var show = document.getElementById("gameOverWin");
+            show.removeAttribute("style");
+            button2.disabled = false;
+          }
+          else if (this.responseText == "loss")
+          {
+            readyToGuess = false;
+            document.getElementById("status").innerHTML = "";
+            var show = document.getElementById("gameOverLose");
+            show.removeAttribute("style");
+            button1.disabled = false;
+          }
+          else
+          {
+            document.open();
+            document.write(this.responseText);
+            document.close();
+
+            readyToGuess = false;
+
+            newSelection = null;
+            var userSelectionEl = document.getElementById("userSelection");
+            userSelectionEl.innerHTML = "";
+
+            var show = document.getElementById("nextMovePane");
+            show.removeAttribute("style");
+            button.disabled = false;
+          }
+          //var body = document.getElementById("body");
+          //body.innerHTML = this.responseText;
+        }
+        // else - TODO - need appropriate error messaging
+      }
+    };
+
+    xhttp.open("GET", targetUrl, true);
+    xhttp.send();
+  }
+
+  function updatePageViaAjaxMove(targetUrl, simple)
+  {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() 
+    {
+      if (this.readyState == XMLHttpRequest.DONE)
+      {
+        if (this.status == 200) 
+        {
+          document.open();
+          document.write(this.responseText);
+          document.close();
+          if(!simple)
+          {
+            readyToGuess = true;
+
+            var hidden = document.getElementById("nextMovePane");
+            hidden.setAttribute("style", "display:none;");
+            button.disabled = true;
+          }
+          //var body = document.getElementById("body");
+          //body.innerHTML = this.responseText;
+        }
+        // else - TODO - need appropriate error messaging
+      }
+    };
+
+    xhttp.open("GET", targetUrl, true);
+    xhttp.send();
+  }
+  
+  </script>
+  <style>
+body {background-color: #cccccc;}
+h1   {text-align:center; font-size: 200%; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif}
+
+h3,h4,p
+{
+  font-size: 120%;
+}
+
+.button 
+  {
+    background-color: #eb3c10;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  .button1 
+  {
+    background-color: #10eb22;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  .button2 
+  {
+    background-color: #eb1010;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+table.Grid {
+  border-collapse:collapse;
+  margin-left:auto; 
+  margin-right:auto;
+}
+
+body {text-align:center;}
+
+th{
+  width: 50px;
+  height: 50px;
+  font-size: 200%;
+  background-color: pink;
+  border: 1px solid #cccccc;
+  font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
+/*th{
+  width: 50px;
+  height: 50px;
+  background-color: red;
+  border: 1px solid #cccccc;
+}*/
+
+td{
+  width:50px;
+  vertical-align:top;
+  /*font-size: 500%;*/
+}
+
+th.border{
+  background-color: #cccccc;
+}
+
+th.oilship {
+  background-color:#C2C2D6;
+  border-color: #C2C2D6;
+}
+
+th.oilshipBlink {
+  background-color:#C2C2D6;
+  border-color: #C2C2D6;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+
+th.submarine{
+  background-color: #A3A3C2;
+  border-color: #A3A3C2;
+}
+
+th.submarineBlink{
+  background-color: #A3A3C2;
+  border-color: #A3A3C2;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+
+th.battleship{
+  background-color: #7575A3;
+  border-color: #7575A3;
+}
+
+th.battleshipBlink{
+  background-color: #7575A3;
+  border-color: #7575A3;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+
+th.aircraft {
+  background-color:#3D3D5C;
+  border-color: #3D3D5C;
+}
+
+th.aircraftBlink {
+  background-color:#3D3D5C;
+  border-color: #3D3D5C;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+th.triangle {
+  background-color:#33334D;
+  border-color: #33334D;
+}
+
+th.triangleBlink {
+  background-color:#33334D;
+  border-color: #33334D;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+th.land{
+  background-color:#009933;
+}
+
+th.water{
+  background-color: #0099FF;
+}
+
+th.waterBlink{
+  background-color: #0099FF;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+th.sunk{
+  background-color: #800000;
+  border-color: #800000;
+}
+
+th.sunkBlink{
+  background-color: #800000;
+  border-color: #800000;
+  animation: blinkingBackground 1s linear 0s 5 alternate;
+}
+@keyframes blinkingBackground{
+		50%		{ background-color: white;}
+	}
+
+.hitSolid {
+  height: 35px;
+  width: 35px;
+  background-color: #FF0000;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.hitLine {
+  height: 35px;
+  width: 35px;
+  border: 2px solid #FF0000;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.missSolid {
+  height: 35px;
+  width: 35px;
+  background-color: white;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.missLine {
+  height: 35px;
+  width: 35px;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.green{
+  color: green;
+  font-size: 250%;
+}
+
+.red{
+  color: #cc3300;
+  font-size: 250%;
+}
+
+.done{
+  text-decoration: line-through;
+  color: red;
+}
+
+.win{
+  color: green;
+}
+
+.lose{
+  color: red;
+}
+
+</style> 
+ </head> 
+ <body> 
+  <div id = "body">
+  <h1>Extreme Battleship</h1> <span id="BoardPanel"> 
+   <table id="Grid" class="Grid"> 
+    <tbody>
+     <tr> 
+      <td rowspan="12"> <h1 id="text1" class="red">Ships</h1> <h1 id="text2" class="red">Left To </h1><h1 id="text3" class="red">Sink</h1> <h2 id="oil">Oilship(2)</h2> <h2 id="sub">Submarine(3)</h2> <h2 id="bat">Battleship(4)</h2> <h2 id="air">Aircraft(5)</h2> <h2 id="tri">Triangle(3)</h2> </td> 
+     </tr> 
+     <tr id="0"> 
+      <th id="100" class="border"><span></span></th> 
+      <th id="101" class="border"><span></span>A</th> 
+      <th id="102" class="border"><span></span>B</th> 
+      <th id="103" class="border"><span></span>C</th> 
+      <th id="104" class="border"><span></span>D</th> 
+      <th id="105" class="border"><span></span>E</th> 
+      <th id="106" class="border"><span></span>F</th> 
+      <th id="107" class="border"><span></span>G</th> 
+      <th id="108" class="border"><span></span>H</th> 
+      <th id="109" class="border"><span></span>I</th> 
+      <th id="110" class="border"><span></span>J</th> 
+     </tr> 
+	 
+     <tr id="1"> 
+      <th id="200" class="border"><span></span>1</th> 
+      <th onclick="selectCell(this);" id="00"><span id="s00"></span> </th>
+      <th onclick="selectCell(this);" id="01"><span id="s01"></span> </th>
+      <th onclick="selectCell(this);" id="02"><span id="s02"></span> </th>
+      <th onclick="selectCell(this);" id="03"><span id="s03"></span> </th>
+      <th onclick="selectCell(this);" id="04"><span id="s04"></span> </th>
+      <th onclick="selectCell(this);" id="05"><span id="s05"></span> </th>
+      <th onclick="selectCell(this);" id="06"><span id="s06"></span> </th>
+      <th onclick="selectCell(this);" id="07"><span id="s07"></span> </th>
+      <th onclick="selectCell(this);" id="08"><span id="s08"></span> </th>
+      <th onclick="selectCell(this);" id="09"><span id="s09"></span> </th>
+      <td rowspan="12" colspan   = "4">
+        <!-- DEBUG ONLY
+        <button id="debugManualStateCheck" onClick="performStateCheck()" class="button">Debug-ManualStateCheck</button>
+        -->
+        <h2 id = "status"></h2>
+        <div id="nextMovePane">
+	        <h3> Please select cell (from green area) to hit </h3>
+	        <h4>Your selection:</h4><span id="userSelection"></span>
+          <button id="nextMoveButton" onClick="makeNextMove()" class="button" disabled>Next Move</button>
+        </div>
+        <div id="rearrangeShipsPane" style="display:none;">
+	        <h3>Are you happy with your fleet placement?</h3>
+	        <p>If yes, start your game now. If not, rearrange your ships.</p>
+          <button id="rearrangeShips" onClick="rearrangeShips()" class="button2">Rearrange Ships</button>
+          <button id="startGame" onClick="startGame()" class="button1">Start Game</button>
+        </div>
+        <div id = "gameOverWin" style = "display:none;">
+          <h3 class = "win">You have won! Another battle awaits, click the button to play again</h3>
+          <button id="playAgainWin" onClick="goHome()" class="button2">Play Again</button>
+        </div>
+        <div id = "gameOverLose" style = "display:none;">
+          <h3 class = "lose">You lost! Don't worry another battle awaits, click the button to play again</h3>
+          <button id="playAgainLose" onClick="goHome()" class="button1">Play Again</button>
+        </div>
+	    </td>
+     </tr> 
+     <tr id="2"> 
+      <th id="300" class="border"><span></span>2</th> 
+      <th onclick="selectCell(this);" id="10"><span id="s10"></span> </th>
+      <th onclick="selectCell(this);" id="11"><span id="s11"></span> </th>
+      <th onclick="selectCell(this);" id="12"><span id="s12"></span> </th>
+      <th onclick="selectCell(this);" id="13"><span id="s13"></span> </th>
+      <th onclick="selectCell(this);" id="14"><span id="s14"></span> </th>
+      <th onclick="selectCell(this);" id="15"><span id="s15"></span> </th>
+      <th onclick="selectCell(this);" id="16"><span id="s16"></span> </th>
+      <th onclick="selectCell(this);" id="17"><span id="s17"></span> </th>
+      <th onclick="selectCell(this);" id="18"><span id="s18"></span> </th>
+      <th onclick="selectCell(this);" id="19"><span id="s19"></span> </th>
+     </tr> 
+     <tr id="3"> 
+      <th id="400" class="border"><span></span>3</th> 
+      <th onclick="selectCell(this);" id="20"><span id="s20"></span> </th>
+      <th onclick="selectCell(this);" id="21"><span id="s21"></span> </th>
+      <th onclick="selectCell(this);" id="22"><span id="s22"></span> </th>
+      <th onclick="selectCell(this);" id="23"><span id="s23"></span> </th>
+      <th onclick="selectCell(this);" id="24"><span id="s24"></span> </th>
+      <th onclick="selectCell(this);" id="25"><span id="s25"></span> </th>
+      <th onclick="selectCell(this);" id="26"><span id="s26"></span> </th>
+      <th onclick="selectCell(this);" id="27"><span id="s27"></span> </th>
+      <th onclick="selectCell(this);" id="28"><span id="s28"></span> </th>
+      <th onclick="selectCell(this);" id="29"><span id="s29"></span> </th>
+     </tr> 
+     <tr id="4"> 
+      <th id="500" class="border"><span></span>4</th> 
+      <th onclick="selectCell(this);" id="30"><span id="s30"></span> </th>
+      <th onclick="selectCell(this);" id="31"><span id="s31"></span> </th>
+      <th onclick="selectCell(this);" id="32"><span id="s32"></span> </th>
+      <th onclick="selectCell(this);" id="33"><span id="s33"></span> </th>
+      <th onclick="selectCell(this);" id="34"><span id="s34"></span> </th>
+      <th onclick="selectCell(this);" id="35"><span id="s35"></span> </th>
+      <th onclick="selectCell(this);" id="36"><span id="s36"></span> </th>
+      <th onclick="selectCell(this);" id="37"><span id="s37"></span> </th>
+      <th onclick="selectCell(this);" id="38"><span id="s38"></span> </th>
+      <th onclick="selectCell(this);" id="39"><span id="s39"></span> </th>
+     </tr> 
+     <tr id="5"> 
+      <th id="600" class="border"><span></span>5</th> 
+      <th onclick="selectCell(this);" id="40"><span id="s40"></span> </th>
+      <th onclick="selectCell(this);" id="41"><span id="s41"></span> </th>
+      <th onclick="selectCell(this);" id="42"><span id="s42"></span> </th>
+      <th onclick="selectCell(this);" id="43"><span id="s43"></span> </th>
+      <th onclick="selectCell(this);" id="44"><span id="s44"></span> </th>
+      <th onclick="selectCell(this);" id="45"><span id="s45"></span> </th>
+      <th onclick="selectCell(this);" id="46"><span id="s46"></span> </th>
+      <th onclick="selectCell(this);" id="47"><span id="s47"></span> </th>
+      <th onclick="selectCell(this);" id="48"><span id="s48"></span> </th>
+      <th onclick="selectCell(this);" id="49"><span id="s49"></span> </th>
+     </tr> 
+     <tr id="6"> 
+      <th id="700" class="border"><span></span>6</th> 
+      <th onclick="selectCell(this);" id="50"><span id="s50"></span> </th>
+      <th onclick="selectCell(this);" id="51"><span id="s51"></span> </th>
+      <th onclick="selectCell(this);" id="52"><span id="s52"></span> </th>
+      <th onclick="selectCell(this);" id="53"><span id="s53"></span> </th>
+      <th onclick="selectCell(this);" id="54"><span id="s54"></span> </th>
+      <th onclick="selectCell(this);" id="55"><span id="s55"></span> </th>
+      <th onclick="selectCell(this);" id="56"><span id="s56"></span> </th>
+      <th onclick="selectCell(this);" id="57"><span id="s57"></span> </th>
+      <th onclick="selectCell(this);" id="58"><span id="s58"></span> </th>
+      <th onclick="selectCell(this);" id="59"><span id="s59"></span> </th>
+     </tr> 
+     <tr id="7"> 
+      <th id="800" class="border"><span></span>7</th> 
+      <th onclick="selectCell(this);" id="60"><span id="s60"></span> </th>
+      <th onclick="selectCell(this);" id="61"><span id="s61"></span> </th>
+      <th onclick="selectCell(this);" id="62"><span id="s62"></span> </th>
+      <th onclick="selectCell(this);" id="63"><span id="s63"></span> </th>
+      <th onclick="selectCell(this);" id="64"><span id="s64"></span> </th>
+      <th onclick="selectCell(this);" id="65"><span id="s65"></span> </th>
+      <th onclick="selectCell(this);" id="66"><span id="s66"></span> </th>
+      <th onclick="selectCell(this);" id="67"><span id="s67"></span> </th>
+      <th onclick="selectCell(this);" id="68"><span id="s68"></span> </th>
+      <th onclick="selectCell(this);" id="69"><span id="s69"></span> </th>
+     </tr> 
+     <tr id="8"> 
+      <th id="900" class="border"><span></span>8</th> 
+      <th onclick="selectCell(this);" id="70"><span id="s70"></span> </th>
+      <th onclick="selectCell(this);" id="71"><span id="s71"></span> </th>
+      <th onclick="selectCell(this);" id="72"><span id="s72"></span> </th>
+      <th onclick="selectCell(this);" id="73"><span id="s73"></span> </th>
+      <th onclick="selectCell(this);" id="74"><span id="s74"></span> </th>
+      <th onclick="selectCell(this);" id="75"><span id="s75"></span> </th>
+      <th onclick="selectCell(this);" id="76"><span id="s76"></span> </th>
+      <th onclick="selectCell(this);" id="77"><span id="s77"></span> </th>
+      <th onclick="selectCell(this);" id="78"><span id="s78"></span> </th>
+      <th onclick="selectCell(this);" id="79"><span id="s79"></span> </th>
+     </tr> 
+     <tr id="9"> 
+      <th id="1000" class="border"><span></span>9</th> 
+      <th onclick="selectCell(this);" id="80"><span id="s80"></span> </th>
+      <th onclick="selectCell(this);" id="81"><span id="s81"></span> </th>
+      <th onclick="selectCell(this);" id="82"><span id="s82"></span> </th>
+      <th onclick="selectCell(this);" id="83"><span id="s83"></span> </th>
+      <th onclick="selectCell(this);" id="84"><span id="s84"></span> </th>
+      <th onclick="selectCell(this);" id="85"><span id="s85"></span> </th>
+      <th onclick="selectCell(this);" id="86"><span id="s86"></span> </th>
+      <th onclick="selectCell(this);" id="87"><span id="s87"></span> </th>
+      <th onclick="selectCell(this);" id="88"><span id="s88"></span> </th>
+      <th onclick="selectCell(this);" id="89"><span id="s89"></span> </th>
+     </tr> 
+     <tr id="10"> 
+      <th id="1000" class="border"><span></span>10</th> 
+      <th onclick="selectCell(this);" id="90"><span id="s90"></span> </th>
+      <th onclick="selectCell(this);" id="91"><span id="s91"></span> </th>
+      <th onclick="selectCell(this);" id="92"><span id="s92"></span> </th>
+      <th onclick="selectCell(this);" id="93"><span id="s93"></span> </th>
+      <th onclick="selectCell(this);" id="94"><span id="s94"></span> </th>
+      <th onclick="selectCell(this);" id="95"><span id="s95"></span> </th>
+      <th onclick="selectCell(this);" id="96"><span id="s96"></span> </th>
+      <th onclick="selectCell(this);" id="97"><span id="s97"></span> </th>
+      <th onclick="selectCell(this);" id="98"><span id="s98"></span> </th>
+      <th onclick="selectCell(this);" id="99"><span id="s99"></span> </th>
+     </tr>
+    </tbody>
+   </table>
+   </span>
+   <span id = "gameID" style="visibility: hidden"></span>
+   <span id = "playerNumber" style="visibility: hidden"></span>
+   <span id = "playerGrid" style="visibility: hidden"></span>
+   <span id = "computerGrid" style="visibility: hidden"></span>
+   <span id = "boardPanel" style ="visibility: hidden"></span>
+ </div>  
+ </body>
+</html>

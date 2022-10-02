@@ -1,0 +1,91 @@
+<html>
+<head>
+    <script type="text/javascript">
+        function startGame()
+        {
+            var urlToNavigateTo = window.location.origin + "/Battleship";
+          
+            var url = new URL(urlToNavigateTo);
+            window.location = url;
+        }
+        function makeDoubleGame()
+        {
+            var urlToNavigateTo = window.location.origin + "/Battleship/Make";
+          
+            var url = new URL(urlToNavigateTo);
+            url.searchParams.append("input", "-1");
+            window.location = url;
+        }
+        function joinDoubleGame()
+        {
+            var input = document.getElementById("myText").value;
+
+            var urlToNavigateTo = window.location.origin + "/Battleship/Join";
+	
+            var url = new URL(urlToNavigateTo);
+            url.searchParams.append("input", input);
+            window.location = url;
+        }
+        
+    </script>
+    <style>
+        
+    body {background-color: #cccccc; text-align:center; font-size: 150%;}
+    /*h1   {text-align:center; font-size: 200%; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif}*/
+    .bold {font-size: 200%; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;}
+    .button 
+    {
+        background-color: #b91616;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    .button1 
+    {
+        background-color: #16b924;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    .button2 
+    {
+        background-color: #b98516;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    </style>
+</head>
+<body>
+    <h1 class="bold">Welcome to Extreme Battleship</h1>
+    <p class="bold">Do you have what it takes to lead your fleet to victory?</p>
+    <p class="bold">Click the button to enter the battle. Good luck!</p>
+    <button onClick="startGame()" class="button">Start Single Player Game</button>
+
+    <p>How to Play</p>
+    <p>1. Place your ships. When you start the game keep rearanging ships until they are in a satisfactory position</p>
+    <p>2. Guess in the top half to find and sink all of the opponent's (computer or person) ships</p>
+    <p>A red dot means you hit a ship, a white dot means you missed, once you hit all points on a ship it will turn dark red</p>
+    <p>The opponent will also guess to hit your ships, look at the bottom to see where the opponent is guessing and which ships are sunk</p>
+    <p>(the opponents's most recent guess will apear blinking)</p>
+    <p>4. If you sink all the opponent's ships before it sinks all of yours you win, if you don't the opponent wins</p>
+</body>
+</html>
